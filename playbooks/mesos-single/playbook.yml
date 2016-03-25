@@ -1,0 +1,90 @@
+---
+- hosts: mesos-single
+  sudo: true
+  vars:
+  tasks:
+    - name: Set VPS hostname
+      hostname: name={{domain_name}}
+    - template: src=hosts dest=/etc/hosts
+#    - name: It's useful to have public key on VPS
+#      authorized_key:
+#        user: root
+#        key:  "{{ lookup('file', '/home/otokarev/.ssh/id_rsa.pub') }}"
+#    - name: It's useful to have public key on VPS
+#      authorized_key:
+#        user: vagrant
+#        key:  "{{ lookup('file', '/home/otokarev/.ssh/id_rsa.pub') }}"
+    - name: yum update
+      command: yum update -y
+    - yum: name=mesosphere-el-repo state=absent
+    - command: rpm -Uvh http://repos.mesosphere.com/el/7/noarch/RPMS/mesosphere-el-repo-7-1.noarch.rpm
+    - yum: name=cloudera-cdh state=absent
+    - command: rpm -Uvh http://archive.cloudera.com/cdh4/one-click-install/redhat/6/x86_64/cloudera-cdh-4-0.x86_64.rpm
+    - yum: name={{item}} state=installed
+      with_items:
+        - vim
+        - telnet
+        - net-tools
+        - mesos
+        - marathon
+        - mesosphere-zookeeper
+    #
+    # Configure Zookeeper 
+    #
+    - copy: dest=/var/lib/zookeeper/myid content={{zoo_myid}}
+    - lineinfile:
+        dest: /etc/zookeeper/conf/zoo.cfg
+        insertafter: EOF
+        regexp: "{{item.regexp}}"
+        line: "{{item.line}}"
+      with_items:
+        - {regexp: "server.2=192.168.2.2:2888:3888", line: "server.2=192.168.2.2:2888:3888"}
+        - {regexp: "server.3=192.168.2.3:2888:3888", line: "server.3=192.168.2.3:2888:3888"}
+        - {regexp: "server.4=192.168.2.4:2888:3888", line: "server.4=192.168.2.4:2888:3888"}
+    - service: name=zookeeper state=restarted enabled=yes
+    #
+    # Configure Mesos/Marathon
+    #
+    - copy: content=zk://192.168.2.4:2181,192.168.2.2:2181,192.168.2.3:2181/mesos dest=/etc/mesos/zk
+    - copy: content=2 dest=/etc/mesos-master/quorum
+    - service: name=mesos-slave state=stopped enabled=no
+    - service: name=mesos-master state=restarted
+    - service: name=marathon state=restarted
+
+- hosts: mesos-slave
+  sudo: true
+  tasks:
+    - name: Set VPS hostname
+      hostname: name={{domain_name}}
+    - template: src=hosts dest=/etc/hosts
+#    - name: It's useful to have public key on VPS
+#      authorized_key:
+#        user: root
+#        key:  "{{ lookup('file', '/home/otokarev/.ssh/id_rsa.pub') }}"
+#    - name: It's useful to have public key on VPS
+#      authorized_key:
+#        user: vagrant
+#        key:  "{{ lookup('file', '/home/otokarev/.ssh/id_rsa.pub') }}"
+    - name: yum update
+      command: yum update -y
+    - yum: name=mesosphere-el-repo state=absent
+    - command: rpm -Uvh http://repos.mesosphere.com/el/7/noarch/RPMS/mesosphere-el-repo-7-1.noarch.rpm
+    - name: Add docker.repo
+      template: src=docker.repo dest=/etc/yum.repos.d/docker.repo
+    - yum: name={{item}} state=installed
+      with_items:
+        - vim
+        - telnet
+        - net-tools
+        - mesos
+        - docker-engine
+
+    #
+    # Configure Mesos/Marathon
+    #
+    - copy: content=zk://192.168.2.4:2181,192.168.2.2:2181,192.168.2.3:2181/mesos dest=/etc/mesos/zk
+    - copy: content=docker,mesos dest=/etc/mesos-slave/containerizers
+    - copy: content=5mins dest=/etc/mesos-slave/executor_registration_timeout
+    - service: name=mesos-slave state=restarted enabled=yes
+    - service: name=docker state=restarted enabled=yes
+    - service: name=mesos-master state=stopped enabled=no

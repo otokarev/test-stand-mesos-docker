@@ -1,0 +1,72 @@
+---
+- hosts: mesos-cluster
+  sudo: true
+  remote_user: vagrant 
+  tasks:
+    - ping:
+- hosts: mesos-cluster
+  sudo: true
+  remote_user: vagrant 
+  vars:
+  tasks:
+    - template: src=hosts.j2 dest=/etc/hosts
+    - name: yum update
+      command: yum update -y
+    - yum: name=mesosphere-el-repo state=absent
+    - command: rpm -Uvh http://repos.mesosphere.com/el/7/noarch/RPMS/mesosphere-el-repo-7-1.noarch.rpm
+    - yum: name={{item}} state=installed
+      with_items:
+        - vim
+        - telnet
+        - net-tools
+        - mesos
+- hosts: mesos-master
+  sudo: true
+  remote_user: vagrant 
+  vars:
+    mesos_master_group: 'mesos-master'
+    zoo_quorum: "{{ (groups['mesos-master']|count/2)|round(0, 'floor')|int + 1 }}"
+    zoo_peer_vars: "{{ hostvars|to_group_vars(groups,'mesos-master') }}"
+    zoo_peer_ips: "{{ hostvars|to_group_vars(groups,'mesos-master')|map_on_attr('ansible_ssh_host') }}"
+  tasks:
+    # Install zookeeper
+    - yum: name=cloudera-cdh state=absent
+    - command: rpm -Uvh http://archive.cloudera.com/cdh4/one-click-install/redhat/6/x86_64/cloudera-cdh-4-0.x86_64.rpm
+    - yum: name={{item}} state=installed
+      with_items:
+        - marathon
+        - mesosphere-zookeeper
+    #
+    # Configure Zookeeper 
+    #
+    - copy: dest=/var/lib/zookeeper/myid content={{zoo_myid}}
+    - template: dest=/etc/zookeeper/conf/zoo.cfg src=zoo.cfg.j2
+    - service: name=zookeeper state=restarted enabled=yes
+    #
+    # Configure Mesos/Marathon
+    #
+    - copy: content=zk://{{ zoo_peer_ips|join(':2181,') }}:2181/mesos dest=/etc/mesos/zk
+    - copy: content={{zoo_quorum}} dest=/etc/mesos-master/quorum
+    - service: name=mesos-slave state=stopped enabled=no
+    - service: name=mesos-master state=restarted
+    - service: name=marathon state=restarted
+- hosts: mesos-slave
+  sudo: true
+  remote_user: vagrant 
+  vars:
+    zoo_peer_ips: "{{ hostvars|to_group_vars(groups,'mesos-master')|map_on_attr('ansible_ssh_host') }}"
+  tasks:
+    - name: Add docker.repo
+      template: src=docker.repo.j2 dest=/etc/yum.repos.d/docker.repo
+    - yum: name={{item}} state=installed
+      with_items: 
+        - docker-engine
+    #       
+    # Configure Mesos/Marathon                                                                        
+    #     
+    - copy: content=zk://{{ zoo_peer_ips|join(':2181,') }}:2181/mesos dest=/etc/mesos/zk
+    - copy: content=docker,mesos dest=/etc/mesos-slave/containerizers                                 
+    - copy: content=5mins dest=/etc/mesos-slave/executor_registration_timeout                         
+    - service: name=mesos-slave state=restarted enabled=yes                                           
+    - service: name=docker state=restarted enabled=yes                                                
+    - service: name=mesos-master state=stopped enabled=no       
