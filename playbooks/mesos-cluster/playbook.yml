@@ -56,11 +56,6 @@
   vars:
     zoo_peer_ips: "{{ hostvars|to_group_vars(groups,'mesos-master')|map_on_attr('ansible_ssh_host') }}"
   tasks:
-    - name: Add docker.repo
-      template: src=docker.repo.j2 dest=/etc/yum.repos.d/docker.repo
-    - yum: name={{item}} state=installed
-      with_items: 
-        - docker-engine
     #       
     # Configure Mesos/Marathon                                                                        
     #     
@@ -68,5 +63,45 @@
     - copy: content=docker,mesos dest=/etc/mesos-slave/containerizers                                 
     - copy: content=5mins dest=/etc/mesos-slave/executor_registration_timeout                         
     - service: name=mesos-slave state=restarted enabled=yes                                           
-    - service: name=docker state=restarted enabled=yes                                                
     - service: name=mesos-master state=stopped enabled=no       
+- hosts: docker
+  sudo: true
+  remote_user: vagrant 
+  vars:
+  tasks:
+    - name: yum update
+      command: yum update -y
+    - name: Add docker.repo
+      template: src=docker.repo.j2 dest=/etc/yum.repos.d/docker.repo
+    - yum: name={{item}} state=present
+      with_items: 
+        - docker-engine
+        - python-docker-py
+    - service: name=docker state=restarted enabled=yes                                                
+- hosts: docker-swarm-master
+  sudo: true
+  remote_user: vagrant 
+  vars:
+    swarm_master_service_id: swarm-master
+    zoo_peer_ips: "{{ hostvars|to_group_vars(groups,'mesos-master')|map_on_attr('ansible_ssh_host') }}"
+  tasks:
+    - name: Swarm master is running
+      docker:
+        name: swarm-master
+        image: swarm
+        ports: 2375:2375
+        command: manage --advertise {{ansible_ssh_host}}:2375 zk://{{ zoo_peer_ips|join(':2181,') }}:2181/swarm
+        env:
+          SERVICE_ID: "{{swarm_master_service_id}}"
+- hosts: docker-swarm-node
+  sudo: true
+  remote_user: vagrant 
+  vars:
+    zoo_peer_ips: "{{ hostvars|to_group_vars(groups,'mesos-master')|map_on_attr('ansible_ssh_host') }}"
+    swarm_master_ips: "{{ hostvars|to_group_vars(groups,'docker-swarm-master')|map_on_attr('ansible_ssh_host') }}"
+  tasks:
+    - name: Swarm node is running
+      docker:
+        name: swarm-node
+        image: swarm
+        command: join --advertise {{ansible_ssh_host}}:2375 zk://{{ zoo_peer_ips|join(':2181,') }}:2181/swarm
