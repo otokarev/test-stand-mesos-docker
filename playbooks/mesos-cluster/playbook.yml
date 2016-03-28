@@ -78,6 +78,69 @@
         - docker-engine
         - python-docker-py
     - service: name=docker state=restarted enabled=yes                                                
+- hosts: consul-server
+  sudo: true
+  remote_user: vagrant 
+  vars:
+  tasks:
+    - debug: msg="{{ansible_fqdn}}--{{ ansible_ssh_host }}"
+      tags: [consul]
+    - name: Install first Consul master
+      shell: >
+        docker run --name consul -h {{ ansible_fqdn }} \
+            -p {{ ansible_ssh_host }}:8300:8300 \
+            -p {{ ansible_ssh_host }}:8301:8301 \
+            -p {{ ansible_ssh_host }}:8301:8301/udp \
+            -p {{ ansible_ssh_host }}:8302:8302 \
+            -p {{ ansible_ssh_host }}:8302:8302/udp \
+            -p {{ ansible_ssh_host }}:8400:8400 \
+            -p {{ ansible_ssh_host }}:8500:8500 \
+            -d \
+            progrium/consul -server -advertise {{ ansible_ssh_host }} -bootstrap-expect=3
+#      docker:
+#        name: consul
+#        image: progrium/consul
+#        state: started
+#        hostname: "{{ ansible_fqdn }}"
+#        command: -server -advertise {{ ansible_ssh_host }} -bootstrap-expect=2
+#        ports:
+#          - "{{ ansible_ssh_host }}:8300:8300"
+#          - "{{ ansible_ssh_host }}:8301:8301"
+#          - "{{ ansible_ssh_host }}:8301:8301/udp"
+#          - "{{ ansible_ssh_host }}:8302:8302"
+#          - "{{ ansible_ssh_host }}:8302:8302/udp"
+#          - "{{ ansible_ssh_host }}:8400:8400"
+#          - "{{ ansible_ssh_host }}:8500:8500"
+      when: consul_join is undefined
+      tags: [consul]
+    - name: Install Consul master
+      shell: >
+        docker run --name consul -h {{ ansible_fqdn }} \
+            -p {{ ansible_ssh_host }}:8300:8300 \
+            -p {{ ansible_ssh_host }}:8301:8301 \
+            -p {{ ansible_ssh_host }}:8301:8301/udp \
+            -p {{ ansible_ssh_host }}:8302:8302 \
+            -p {{ ansible_ssh_host }}:8302:8302/udp \
+            -p {{ ansible_ssh_host }}:8400:8400 \
+            -p {{ ansible_ssh_host }}:8500:8500 \
+            -d \
+            progrium/consul -server -advertise {{ ansible_ssh_host }} -join={{ consul_join }}
+#      docker:
+#        name: consul
+#        image: progrium/consul
+#        state: started
+#        hostname: "{{ ansible_fqdn }}"
+#        command: -server -advertise {{ ansible_ssh_host }} {{ ansible_ssh_host }} -join={{ consul_join }}
+#        ports:
+#          - "{{ ansible_ssh_host }}:8300:8300"
+#          - "{{ ansible_ssh_host }}:8301:8301"
+#          - "{{ ansible_ssh_host }}:8301:8301/udp"
+#          - "{{ ansible_ssh_host }}:8302:8302"
+#          - "{{ ansible_ssh_host }}:8302:8302/udp"
+#          - "{{ ansible_ssh_host }}:8400:8400"
+#          - "{{ ansible_ssh_host }}:8500:8500"
+      when: consul_join is defined
+      tags: [consul]
 - hosts: docker-swarm-master
   sudo: true
   remote_user: vagrant 

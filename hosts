@@ -2,14 +2,17 @@
 [mesos-cluster:children]
 mesos-master
 mesos-slave
+
 [mesos-master]
 master2.mesos.boom zoo_myid=1 ansible_ssh_host=192.168.2.2
 master3.mesos.boom zoo_myid=2 ansible_ssh_host=192.168.2.3
 master4.mesos.boom zoo_myid=3 ansible_ssh_host=192.168.2.4
+
 [mesos-slave]
 slave5.mesos.boom ansible_ssh_host=192.168.2.5
 slave6.mesos.boom ansible_ssh_host=192.168.2.6
 slave7.mesos.boom ansible_ssh_host=192.168.2.7
+
 [docker]
 [docker:children]
 docker-swarm-node
@@ -19,7 +22,13 @@ docker-swarm-master
 slave5.mesos.boom ansible_ssh_host=192.168.2.5
 slave6.mesos.boom ansible_ssh_host=192.168.2.6
 slave7.mesos.boom ansible_ssh_host=192.168.2.7
+
 [docker-swarm-master]
 master2.mesos.boom zoo_myid=1 ansible_ssh_host=192.168.2.2
 master3.mesos.boom zoo_myid=2 ansible_ssh_host=192.168.2.3
 master4.mesos.boom zoo_myid=3 ansible_ssh_host=192.168.2.4
+
+[consul-server]
+master2.mesos.boom zoo_myid=1 ansible_ssh_host=192.168.2.2
+master3.mesos.boom zoo_myid=2 ansible_ssh_host=192.168.2.3 consul_join=192.168.2.2
+master4.mesos.boom zoo_myid=3 ansible_ssh_host=192.168.2.4 consul_join=192.168.2.2
