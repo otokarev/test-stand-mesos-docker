@@ -20,6 +20,8 @@
         - telnet
         - net-tools
         - mesos
+
+
 - hosts: mesos-master
   sudo: true
   remote_user: vagrant 
@@ -50,6 +52,8 @@
     - service: name=mesos-slave state=stopped enabled=no
     - service: name=mesos-master state=restarted
     - service: name=marathon state=restarted
+
+
 - hosts: mesos-slave
   sudo: true
   remote_user: vagrant 
@@ -64,6 +68,8 @@
     - copy: content=5mins dest=/etc/mesos-slave/executor_registration_timeout                         
     - service: name=mesos-slave state=restarted enabled=yes                                           
     - service: name=mesos-master state=stopped enabled=no       
+
+
 - hosts: docker
   sudo: true
   remote_user: vagrant 
@@ -77,17 +83,22 @@
       with_items: 
         - docker-engine
         - python-docker-py
+    - file: name=/etc/systemd/system/docker.service.d state=directory
+    - name: Add Docker daemon config
+      template: src=docker.conf dest=/etc/systemd/system/docker.service.d/docker.conf
+    - command: systemctl daemon-reload                                              
     - service: name=docker state=restarted enabled=yes                                                
+
+
 - hosts: consul-server
   sudo: true
   remote_user: vagrant 
   vars:
   tasks:
-    - debug: msg="{{ansible_fqdn}}--{{ ansible_ssh_host }}"
-      tags: [consul]
     - name: Install first Consul master
       docker:
         name: consul
+        docker_url: "tcp://{{ansible_ssh_host}}:2375"
         image: progrium/consul
         state: started
         restart_policy: always
@@ -106,6 +117,7 @@
     - name: Install Consul master
       docker:
         name: consul
+        docker_url: "tcp://{{ansible_ssh_host}}:2375"
         image: progrium/consul
         state: started
         restart_policy: always
@@ -121,30 +133,39 @@
           - "{{ ansible_ssh_host }}:8500:8500"
       when: consul_join is defined
       tags: [consul]
+
+
 - hosts: docker-swarm-master
   sudo: true
   remote_user: vagrant 
   vars:
     swarm_master_service_id: swarm-master
-    zoo_peer_ips: "{{ hostvars|to_group_vars(groups,'mesos-master')|map_on_attr('ansible_ssh_host') }}"
+#    zoo_url: "zk://{{ hostvars|to_group_vars(groups,'mesos-master')|map_on_attr('ansible_ssh_host')|join(':2181,') }}:2181/swarm"
+    consul_url: "consul://{{ hostvars|to_group_vars(groups,'consul-server')|map_on_attr('ansible_ssh_host')|random }}:8500"
   tasks:
     - name: Swarm master is running
       docker:
         name: swarm-master
+        docker_url: "tcp://{{ansible_ssh_host}}:2375"
         image: swarm
-        ports: 2375:2375
-        command: manage --advertise {{ansible_ssh_host}}:2375 zk://{{ zoo_peer_ips|join(':2181,') }}:2181/swarm
-        env:
-          SERVICE_ID: "{{swarm_master_service_id}}"
+        ports:
+          - "{{ansible_ssh_host}}:4000:2375"
+        command: manage --replication --advertise {{ansible_ssh_host}}:4000 {% if zoo_url is defined%}{{zoo_url}}{% elif consul_url%}{{consul_url}}{% else %}NO_KEYVALE_STORAGE_SPECIFIED{% endif %}
+      tags: [swarm, docker]
+
+
 - hosts: docker-swarm-node
   sudo: true
   remote_user: vagrant 
   vars:
-    zoo_peer_ips: "{{ hostvars|to_group_vars(groups,'mesos-master')|map_on_attr('ansible_ssh_host') }}"
+#    zoo_url: "zk://{{ hostvars|to_group_vars(groups,'mesos-master')|map_on_attr('ansible_ssh_host')|join(':2181,') }}:2181/swarm"
+    consul_url: "consul://{{ hostvars|to_group_vars(groups,'consul-server')|map_on_attr('ansible_ssh_host')|random }}:8500"
     swarm_master_ips: "{{ hostvars|to_group_vars(groups,'docker-swarm-master')|map_on_attr('ansible_ssh_host') }}"
   tasks:
     - name: Swarm node is running
       docker:
         name: swarm-node
+        docker_url: "tcp://{{ansible_ssh_host}}:2375"
         image: swarm
-        command: join --advertise {{ansible_ssh_host}}:2375 zk://{{ zoo_peer_ips|join(':2181,') }}:2181/swarm
+        command: join --advertise {{ansible_ssh_host}}:2375 {% if zoo_url is defined%}{{zoo_url}}{% elif consul_url%}{{consul_url}}{% else %}NO_KEYVALE_STORAGE_SPECIFIED{% endif %}
+      tags: [swarm, docker]
