@@ -1,0 +1,2 @@
+network:
+    host: "${ES_NET_HOST}"
