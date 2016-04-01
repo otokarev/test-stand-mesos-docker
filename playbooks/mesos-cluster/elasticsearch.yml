@@ -1,2 +1,2 @@
 network:
-    host: "${ES_NET_HOST}"
+    host: "_eth1:ip4_"
