@@ -17,9 +17,18 @@
     - yum: name={{item}} state=installed
       with_items:
         - vim
+        - net-tools
+        - bind-utils
         - telnet
         - net-tools
-        - mesos
+        #- mesos
+        - ntp
+        - cyrus-sasl-md5
+        - subversion
+    # Marathon 0.15 does not support Mesos 0.28, so try 0.27
+    - yum: name=mesos state=absent
+    - command: rpm -Uvh http://repos.mesosphere.com/el/7/x86_64/RPMS/mesos-0.27.2-2.0.15.centos701406.x86_64.rpm
+    - service: name=ntpd state=restarted enabled=yes
 
 
 - hosts: mesos-master
@@ -168,4 +177,4 @@
         docker_url: "tcp://{{ansible_ssh_host}}:2375"
         image: swarm
         command: join --advertise {{ansible_ssh_host}}:2375 {% if zoo_url is defined%}{{zoo_url}}{% elif consul_url%}{{consul_url}}{% else %}NO_KEYVALE_STORAGE_SPECIFIED{% endif %}
-      tags: [swarm, docker]
+      tags: [swarm, docker, swarm-node]

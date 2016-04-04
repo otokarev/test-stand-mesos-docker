@@ -1,19 +1,25 @@
-{
-  "id": "elasticsearch",
-  "container": {
-    "docker": {
-      "image": "mesos/elasticsearch-scheduler",
-      "network": "HOST"
+[
+    {
+      "id": "elasticsearch",
+      "container": {
+        "docker": {
+          "image": "mesos/elasticsearch-scheduler",
+          "network": "HOST",
+          "parameters": [
+           ]
+        }
+      },
+      "args": [
+        "--zookeeperMesosUrl", "zk://192.168.2.4:2181,192.168.2.2:2181,192.168.2.3:2181/mesos",
+        "--useIpAddress", "true",
+        "--elasticsearchNodes", "2",
+        "--elasticsearchSettingsLocation", "https://stash.openprovider.nl/projects/IN/repos/test-stand-mesos-docker/browse/playbooks/mesos-cluster/elasticsearch.yml?raw"
+      ],
+      "cpus": 0.2,
+      "mem": 256.0,
+      "env": {
+        "JAVA_OPTS": "-Xms128m -Xmx256m"
+      },
+      "instances": 1
     }
-  },
-  "args": [
-    "--zookeeperMesosUrl", "zk://192.168.2.4:2181,192.168.2.2:2181,192.168.2.3:2181/mesos",
-    "--useIpAddress", "true"
-  ],
-  "cpus": 0.2,
-  "mem": 256.0,
-  "env": {
-    "JAVA_OPTS": "-Xms128m -Xmx256m"
-  },
-  "instances": 3
-}
+]
