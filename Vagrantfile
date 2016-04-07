@@ -27,7 +27,8 @@ Vagrant.configure(2) do |config|
     (2..4).each do |i|
       config.vm.define "master#{i}" do |c|
         c.vm.provider "virtualbox" do |v|
-          v.cpus = 2
+          v.cpus = 4
+          v.memory = 2048
         end
         c.vm.network "private_network", ip: "192.168.2.#{i}"
         c.vm.hostname = "master#{i}.mesos.boom"

@@ -1,0 +1,2 @@
+- include: configure.yml
+  tags: [mesos, configure]

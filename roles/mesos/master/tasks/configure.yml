@@ -1,0 +1,5 @@
+- copy: content=zk://{{ zoo_peer_ips|join(':2181,') }}:2181/mesos dest=/etc/mesos/zk
+- copy: content={{zoo_quorum}} dest=/etc/mesos-master/quorum
+- service: name=mesos-slave state=stopped enabled=no
+- service: name=mesos-master state=restarted
+- service: name=marathon state=restarted

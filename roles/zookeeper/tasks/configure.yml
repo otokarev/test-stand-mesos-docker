@@ -1,0 +1,3 @@
+- copy: dest=/var/lib/zookeeper/myid content={{zoo_myid}}
+- template: dest=/etc/zookeeper/conf/zoo.cfg src=zoo.cfg.j2
+- service: name=zookeeper state=restarted enabled=yes

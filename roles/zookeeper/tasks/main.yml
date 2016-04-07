@@ -1,0 +1,11 @@
+- yum: name=cloudera-cdh state=absent
+- command: rpm -Uvh http://archive.cloudera.com/cdh4/one-click-install/redhat/6/x86_64/cloudera-cdh-4-0.x86_64.rpm
+- yum: name={{item}} state=installed
+  with_items:
+    - mesosphere-zookeeper
+- yum: name={{item}} state=installed
+  with_items:
+    - marathon
+
+- include: configure.yml
+  tags: [zookeeper, configure]
