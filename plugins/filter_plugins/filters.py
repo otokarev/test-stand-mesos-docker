@@ -1,6 +1,28 @@
 from ansible import errors
 from copy import deepcopy
+from sets import Set
 import json
+
+def dict_merge(a, b):
+    if not isinstance(b, dict):
+        return b
+    result = deepcopy(a)
+    for k, v in b.iteritems():
+        if k in result and isinstance(result[k], dict):
+                result[k] = dict_merge(result[k], v)
+        else:
+            result[k] = deepcopy(v)
+    return result
+
+def get_ip_from_inv(host_vars, groups, mixin = {}):
+    data = {}
+    for group in groups:
+        if group not in data:
+            data[group] = []
+            for host in groups[group]:
+                data[group].extend(host_vars[host]['ansible_all_ipv4_addresses'])
+    data = dict_merge(data, mixin)
+    return data
 
 def to_group_vars(host_vars, groups, target = 'all'):
     data = []
@@ -183,5 +205,6 @@ class FilterModule(object):
             'has_attr': has_attr,
             'multiple_dict_merge': multiple_dict_merge,
             'change_attr': change_attr,
-            'filter_on_attr': filter_on_attr
+            'filter_on_attr': filter_on_attr,
+            'get_ip_from_inv': get_ip_from_inv
         }

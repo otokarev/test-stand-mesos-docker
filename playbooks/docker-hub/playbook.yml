@@ -1,16 +1,26 @@
 ---
-- hosts: docker-hub
+- hosts: docker_hub
   sudo: true
   remote_user: vagrant 
   vars:
-  tasks:
+    firewall:
+      docker_hub:
+        source_groups:
+          - vagrant
+        ports:
+          - port: 5043
+  roles:
+    - firewalld
+  post_tasks:
     #
     # Install Docker Daemon
     #
     - name: Install yum repo for docker
       copy: src=docker.repo dest=/etc/yum.repos.d/docker.repo
+
     - name: yum update
       command: yum update -y
+
     - name: Install required RPMs
       yum: name={{item}} state=present
       with_items:
@@ -22,14 +32,19 @@
     #
     - name: Create data directory
       file: name=/var/lib/docker-hub/data state=directory
+
     - name: Create nginx configs directory
       file: name=/var/lib/docker-hub/auth state=directory
+
     - name: Add nginx config
       template: src=nginx.conf.j2 dest=/var/lib/docker-hub/auth/nginx.conf
+
     - name: Add ssl certificate to nginx config
       copy: src=ssl/ dest=/var/lib/docker-hub/auth/
+
     - name: Generate a password for the registry
       shell: docker run --rm --entrypoint htpasswd registry:2 -bn opimages FnrPmt4C > /var/lib/docker-hub/auth/nginx.htpasswd
+
     - name: Create docker registry container
       docker:
         name: registry
@@ -39,6 +54,7 @@
           - "127.0.0.1:5000:5000"
         volumes:
           - /var/lib/docker-hub/data:/var/lib/registry
+
     - name: Create nginx container
       docker:
         name: nginx
