@@ -9,6 +9,10 @@
           - vagrant
         ports:
           - port: 5043
+          - port: 443
+          - port: 80
+    registry_hostname: docker-hub-test.openprovider.nl
+    nexus_hostname: nexus-test.openprovider.nl
   roles:
     - firewalld
   post_tasks:
@@ -55,6 +59,14 @@
         volumes:
           - /var/lib/docker-hub/data:/var/lib/registry
 
+    - name: Create sonatype/nexus3
+      docker:
+        name: nexus
+        image: sonatype/nexus3
+        restart_policy: always
+        ports:
+          - "8081:8081"
+
     - name: Create nginx container
       docker:
         name: nginx
@@ -62,9 +74,13 @@
         restart_policy: always
         links:
           - registry:registry
+          - nexus:nexus
+        expose:
+          - "5043"
         ports:
-          - "5043:443"
+          - "443:443"
+          - "5043:5043"
+          - "80:80"
         volumes:
           - /var/lib/docker-hub/auth:/etc/nginx/conf.d
           - /var/lib/docker-hub/auth/nginx.conf:/etc/nginx/nginx.conf:ro
-
