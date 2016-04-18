@@ -3,17 +3,35 @@ events {
 }
 
 http {
+  # disable any limits to avoid HTTP 413 for large image uploads
+  client_max_body_size 0;
+
+  # required to avoid HTTP 411: see Issue #1486 (https://github.com/docker/docker/issues/1486)
+  chunked_transfer_encoding on;
+
   server {
         listen 80;
         rewrite ^(.*) https://$host$1 permanent;
   }
 
-  upstream docker-registry {
-    server registry:5000;
-  }
-
   upstream sonatype-nexus {
     server nexus:8081;
+  }
+
+  upstream nexus-docker-group {
+    server nexus:8000;
+  }
+
+  upstream nexus-docker-hub-proxy {
+    server nexus:6000;
+  }
+
+  upstream nexus-docker-registry-proxy {
+    server nexus:7000;
+  }
+
+  upstream docker-registry {
+    server registry:5000;
   }
 
   ## Set a variable to help us decide if we need to add the
@@ -28,23 +46,9 @@ http {
 
   server {
     listen 5043 ssl;
-    server_name {{ registry_hostname }};
+    server_name {{ nexus_hostname }};
 
-    # SSL
-    ssl_certificate /etc/nginx/conf.d/wildcard.openprovider.nl.crt;
-    ssl_certificate_key /etc/nginx/conf.d/wildcard.openprovider.nl.key;
-
-    # Recommendations from https://raymii.org/s/tutorials/Strong_SSL_Security_On_nginx.html
-    ssl_protocols TLSv1.1 TLSv1.2;
-    ssl_ciphers 'EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH';
-    ssl_prefer_server_ciphers on;
-    ssl_session_cache shared:SSL:10m;
-
-    # disable any limits to avoid HTTP 413 for large image uploads
-    client_max_body_size 0;
-
-    # required to avoid HTTP 411: see Issue #1486 (https://github.com/docker/docker/issues/1486)
-    chunked_transfer_encoding on;
+    include conf.d/nginx-ssl.inc;
 
     location /v2/ {
       # Do not allow connections from docker 1.5 and earlier
@@ -69,28 +73,57 @@ http {
       proxy_read_timeout                  900;
     }
   }
+
   server {
     listen 443 ssl;
     server_name {{ nexus_hostname }};
 
-    # SSL
-    ssl_certificate /etc/nginx/conf.d/wildcard.openprovider.nl.crt;
-    ssl_certificate_key /etc/nginx/conf.d/wildcard.openprovider.nl.key;
-
-    # Recommendations from https://raymii.org/s/tutorials/Strong_SSL_Security_On_nginx.html
-    ssl_protocols TLSv1.1 TLSv1.2;
-    ssl_ciphers 'EECDH+AESGCM:EDH+AESGCM:AES256+EECDH:AES256+EDH';
-    ssl_prefer_server_ciphers on;
-    ssl_session_cache shared:SSL:10m;
-
-    # disable any limits to avoid HTTP 413 for large image uploads
-    client_max_body_size 0;
-
-    # required to avoid HTTP 411: see Issue #1486 (https://github.com/docker/docker/issues/1486)
-    chunked_transfer_encoding on;
+    include conf.d/nginx-ssl.inc;
 
     location / {
         proxy_pass http://sonatype-nexus;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto "https";
+    }
+  }
+  server {
+    listen 8043 ssl;
+    server_name {{ nexus_hostname }};
+
+    include conf.d/nginx-ssl.inc;
+
+    location / {
+        proxy_pass http://nexus-docker-group;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto "https";
+    }
+  }
+  server {
+    listen 6043 ssl;
+    server_name {{ nexus_hostname }};
+
+    include conf.d/nginx-ssl.inc;
+
+    location / {
+        proxy_pass http://nexus-docker-hub-proxy;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto "https";
+    }
+  }
+  server {
+    listen 7043 ssl;
+    server_name {{ nexus_hostname }};
+
+    include conf.d/nginx-ssl.inc;
+
+    location / {
+        proxy_pass http://nexus-docker-registry-proxy;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;

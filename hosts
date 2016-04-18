@@ -39,4 +39,4 @@
 #master4.mesos.boom zoo_myid=3 ansible_ssh_host=192.168.2.4 consul_join=192.168.2.2
 
 [docker_hub]
-docker-hub-test.openprovider.nl ansible_hostname=docker-hub-test.openprovider.nl
+nexus-test.openprovider.nl ansible_hostname=nexus-test.openprovider.nl

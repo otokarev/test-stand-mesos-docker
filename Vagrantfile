@@ -78,6 +78,6 @@ Vagrant.configure(2) do |config|
         v.cpus = 1
       end
       c.vm.network "private_network", ip: "192.168.2.8"
-      c.vm.hostname = "docker-hub-test.openprovider.nl"
+      c.vm.hostname = "nexus-test.openprovider.nl"
     end
 end
