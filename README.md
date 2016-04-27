@@ -8,7 +8,7 @@ sudo docker -H 192.168.2.2:4000 network create --driver overlay --subnet=10.0.9.
 
 sudo docker run --net host --name hui --rm -i -t ubuntu /bin/bash
 
-curl -k -XPOST -d @es.json -H "Content-Type: application/json" http://master2.mesos.boom:8080/v2/apps
+curl -k -XPUT -d @playbooks/mesos-cluster/es.json -H "Content-Type: application/json" http://master2.mesos.boom:8080/v2/apps
 
 TODO:
 
@@ -37,8 +37,7 @@ export MESOS_NATIVE_JAVA_LIBRARY=/usr/local/lib/libmesos.so
 
 Test for spark-shell:
 ```
-val data = Array(range(1,1000))
-sc.parallelize(data).foreach((x) => Thread.sleep(1000))
+sc.parallelize((1 to 1000)).foreach((x) => Thread.sleep(1000))
 ```
 
 Take care about --executor-memory, executor will not start if a node has no enough memory
