@@ -4,6 +4,13 @@
   remote_user: vagrant 
   tasks:
     - ping:
+
+- hosts: mesos-master
+  sudo: true
+  remote_user: vagrant 
+  tasks:
+    - ping:
+
 - hosts: mesos-cluster
   sudo: true
   remote_user: vagrant 
@@ -42,6 +49,26 @@
     zoo_peer_ips: "{{ hostvars|to_group_vars(groups,'mesos-master')|map_on_attr('ansible_ssh_host') }}"
   roles:
     - mesos/node
+
+- hosts: mesos-dns
+  sudo: true
+  remote_user: vagrant 
+  vars:
+    mesos_dns_zk: "zk://{{ hostvars|to_group_vars(groups,'mesos-master')|map_on_attr('ansible_ssh_host')|join(':2181,') }}:2181/mesos"
+    mesos_dns_master_ips: "{{ hostvars|to_group_vars(groups,'mesos-master')|map_on_attr('ansible_ssh_host') }}"
+    mesos_dns_listen_ip: "{{ansible_ssh_host}}"
+    mesos_dns_domain: "mesos.boom"
+    mesos_dns_soamname: "ns1.mesos.boom"
+    mesos_dns_soarname: "root.ns1.mesos.boom"
+  roles:
+    - mesos/dns
+    - role: tumf.systemd-service
+      systemd_service_name: "mesos-dns"
+      systemd_service_Unit_Description: Mesos DNS
+      systemd_service_Service_ExecStart: /opt/mesos-dns/bin/mesos-dns -config=/opt/mesos-dns/conf/config.json
+  post_tasks:
+    - service: name=mesos-dns state=restarted
+  tags: ["dns"]
 
 - hosts: spark-node
   sudo: true

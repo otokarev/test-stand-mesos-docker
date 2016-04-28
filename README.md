@@ -44,3 +44,18 @@ Take care about --executor-memory, executor will not start if a node has no enou
 
 Before that we should install java-1.8 on all nodes, and upload spark
 
+Mesos-DNS
+---------
+
+Install external role:
+
+```
+ansible-galaxy install tumf.systemd-service
+```
+
+Check that Mesos DNS works
+
+```
+dig @192.168.2.2 _elasticsearch-executor._tcp.elasticsearch.mesos.boom SRV
+dig @192.168.2.2 _elasticsearch._tcp.marathon.mesos.boom SRV
+```

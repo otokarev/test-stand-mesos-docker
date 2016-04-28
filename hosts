@@ -13,6 +13,9 @@ slave5.mesos.boom ansible_ssh_host=192.168.2.5
 slave6.mesos.boom ansible_ssh_host=192.168.2.6
 slave7.mesos.boom ansible_ssh_host=192.168.2.7
 
+[mesos-dns]
+master2.mesos.boom ansible_ssh_host=192.168.2.2
+
 [spark-node]
 slave5.mesos.boom
 slave6.mesos.boom

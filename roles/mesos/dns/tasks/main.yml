@@ -1,0 +1,13 @@
+---
+- file: path=/opt/mesos-dns/ state=directory mode=0755
+- file: path=/opt/mesos-dns/bin state=directory mode=0755
+- file: path=/opt/mesos-dns/conf state=directory mode=0755
+
+- stat: path=/opt/mesos-dns/bin/mesos-dns-v0.5.2-linux-amd64
+  register: mesos_dns_binary_result
+- debug: var=mesos_dns_binary_result
+- get_url: url={{mesos_dns_binary_url}} dest=/opt/mesos-dns/bin/ mode=0744
+  when: not mesos_dns_binary_result.stat.exists
+
+- file: src={{mesos_dns_binary_path}} dest=/opt/mesos-dns/bin/mesos-dns state=link force=yes
+- template: src=config.json.j2 dest=/opt/mesos-dns/conf/config.json

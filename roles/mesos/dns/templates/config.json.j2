@@ -1,0 +1,26 @@
+{
+  "zk": "{{ mesos_dns_zk }}",
+  "masters": [
+{% for item in mesos_dns_master_ips %}
+    "{{item}}:5050"{% if not loop.last %},{% endif %}
+{% endfor %}
+  ],
+  "refreshSeconds": 60,
+  "ttl": 60,
+  "domain": "{{mesos_dns_domain}}",
+  "port": 53,
+  "resolvers": ["8.8.8.8"],
+  "timeout": 5, 
+  "httpon": true,
+  "dnson": true,
+  "httpport": 8123,
+  "externalon": true,
+  "listener": "{{mesos_dns_listen_ip}}",
+  "SOAMname": "{{mesos_dns_soamname}}",
+  "SOARname": "{{mesos_dns_soarname}}",
+  "SOARefresh": 60,
+  "SOARetry":   600,
+  "SOAExpire":  86400,
+  "SOAMinttl": 60,
+  "IPSources": ["netinfo", "mesos", "host"]
+}
