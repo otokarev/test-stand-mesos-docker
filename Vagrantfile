@@ -29,7 +29,7 @@ Vagrant.configure(2) do |config|
       config.vm.define "master#{i}" do |c|
         c.vm.provider "virtualbox" do |v|
           v.cpus = 4
-          v.memory = 1850
+          v.memory = 1600
         end
         c.vm.network "private_network", ip: "192.168.2.#{i}"
         c.vm.hostname = "master#{i}.mesos.boom"
@@ -39,7 +39,7 @@ Vagrant.configure(2) do |config|
     (5..7).each do |i|
       config.vm.define "slave#{i}" do |c|
         c.vm.provider "virtualbox" do |v|
-          v.memory = 1850
+          v.memory = 2048
           v.cpus = 2
         end
         c.vm.network "private_network", ip: "192.168.2.#{i}"

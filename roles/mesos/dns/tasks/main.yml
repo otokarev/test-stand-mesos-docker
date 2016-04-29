@@ -5,7 +5,6 @@
 
 - stat: path=/opt/mesos-dns/bin/mesos-dns-v0.5.2-linux-amd64
   register: mesos_dns_binary_result
-- debug: var=mesos_dns_binary_result
 - get_url: url={{mesos_dns_binary_url}} dest=/opt/mesos-dns/bin/ mode=0744
   when: not mesos_dns_binary_result.stat.exists
 

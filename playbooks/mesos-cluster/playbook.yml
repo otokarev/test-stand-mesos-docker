@@ -4,12 +4,14 @@
   remote_user: vagrant 
   tasks:
     - ping:
+  tags: [mesos]
 
 - hosts: mesos-master
   sudo: true
   remote_user: vagrant 
   tasks:
     - ping:
+  tags: [mesos]
 
 - hosts: mesos-cluster
   sudo: true
@@ -28,6 +30,7 @@
     - service: name=ntpd state=restarted enabled=yes
   roles:
     - mesos
+  tags: [mesos]
 
 - hosts: mesos-master
   sudo: true
@@ -40,6 +43,7 @@
   roles:
     - zookeeper
     - mesos/master
+  tags: [mesos]
 
 
 - hosts: mesos-slave
@@ -49,6 +53,7 @@
     zoo_peer_ips: "{{ hostvars|to_group_vars(groups,'mesos-master')|map_on_attr('ansible_ssh_host') }}"
   roles:
     - mesos/node
+  tags: [mesos]
 
 - hosts: mesos-dns
   sudo: true

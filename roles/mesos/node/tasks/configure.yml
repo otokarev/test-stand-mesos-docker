@@ -3,4 +3,3 @@
 - copy: content=5mins dest=/etc/mesos-slave/executor_registration_timeout                         
 - service: name=mesos-slave state=restarted enabled=yes                                           
 - service: name=mesos-master state=stopped enabled=no       
-

@@ -1,5 +1,8 @@
 - yum: name=cloudera-cdh state=absent
+- stat: path=/etc/yum.repos.d/cloudera-cdh4.repo
+  register: cloudera_cdh4_path
 - command: rpm -Uvh http://archive.cloudera.com/cdh4/one-click-install/redhat/6/x86_64/cloudera-cdh-4-0.x86_64.rpm
+  when: not cloudera_cdh4_path.stat.exists
 - yum: name={{item}} state=installed
   with_items:
     - mesosphere-zookeeper

@@ -1,12 +1,10 @@
-- name: yum update
-  command: yum update -y
-- yum: name=mesosphere-el-repo state=absent
+- stat: path=/etc/yum.repos.d/mesosphere.repo
+  register: mesosphere_path
 - command: rpm -Uvh http://repos.mesosphere.com/el/7/noarch/RPMS/mesosphere-el-repo-7-1.noarch.rpm
+  when: not mesosphere_path.stat.exists
 - yum: name={{item}} state=installed
   with_items:
-    #- mesos
     - cyrus-sasl-md5
     - subversion
 # Marathon 0.15 does not support Mesos 0.28, so try 0.27
-- yum: name=mesos state=absent
-- command: rpm -Uvh http://repos.mesosphere.com/el/7/x86_64/RPMS/mesos-0.27.2-2.0.15.centos701406.x86_64.rpm
+- yum: name=mesos-0.27.2 state=present

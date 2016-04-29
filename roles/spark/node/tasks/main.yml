@@ -1,4 +1,7 @@
 - yum: name={{item}} state=present
   with_items: 
     - java-1.8.0-openjdk.x86_64
+- stat: path=/tmp/spark-1.6.1-bin-hadoop2.6
+  register: spark_path
 - unarchive: src=spark-1.6.1-bin-hadoop2.6.tgz dest=/tmp/ copy=true
+  when: not spark_path.stat.exists
