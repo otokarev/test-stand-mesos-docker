@@ -1,0 +1,7 @@
+---
+- name: Check if docker daemon installed
+  shell: systemctl status docker
+  ignore_errors: True
+  register: docker_check_result
+- include: install.yml
+  when: docker_check_result.rc > 0

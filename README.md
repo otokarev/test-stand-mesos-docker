@@ -59,3 +59,10 @@ Check that Mesos DNS works
 dig @192.168.2.2 _elasticsearch-executor._tcp.elasticsearch.mesos.boom SRV
 dig @192.168.2.2 _elasticsearch._tcp.marathon.mesos.boom SRV
 ```
+
+Consul UI
+---------
+
+```
+http://192.168.2.2:8500
+```

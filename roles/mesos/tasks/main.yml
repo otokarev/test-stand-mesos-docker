@@ -6,5 +6,4 @@
   with_items:
     - cyrus-sasl-md5
     - subversion
-# Marathon 0.15 does not support Mesos 0.28, so try 0.27
-- yum: name=mesos-0.27.2 state=present
+    - mesos

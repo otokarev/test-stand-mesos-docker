@@ -4,14 +4,14 @@
   remote_user: vagrant 
   tasks:
     - ping:
-  tags: [mesos]
+  tags: [mesos, mesos-node, mesos-master]
 
 - hosts: mesos-master
   sudo: true
   remote_user: vagrant 
   tasks:
     - ping:
-  tags: [mesos]
+  tags: [mesos, mesos-node, mesos-master]
 
 - hosts: mesos-cluster
   sudo: true
@@ -30,7 +30,7 @@
     - service: name=ntpd state=restarted enabled=yes
   roles:
     - mesos
-  tags: [mesos]
+  tags: [mesos, mesos-node, mesos-master]
 
 - hosts: mesos-master
   sudo: true
@@ -43,7 +43,7 @@
   roles:
     - zookeeper
     - mesos/master
-  tags: [mesos]
+  tags: [mesos, mesos-master]
 
 
 - hosts: mesos-slave
@@ -53,7 +53,7 @@
     zoo_peer_ips: "{{ hostvars|to_group_vars(groups,'mesos-master')|map_on_attr('ansible_ssh_host') }}"
   roles:
     - mesos/node
-  tags: [mesos]
+  tags: [mesos, mesos-node]
 
 - hosts: mesos-dns
   sudo: true
@@ -86,22 +86,8 @@
 - hosts: docker
   sudo: true
   remote_user: vagrant 
-  vars:
-  tasks:
-    - name: yum update
-      command: yum update -y
-    - name: Add docker.repo
-      template: src=docker.repo.j2 dest=/etc/yum.repos.d/docker.repo
-    - yum: name={{item}} state=present
-      with_items: 
-        - docker-engine
-        - python-docker-py
-    - file: name=/etc/systemd/system/docker.service.d state=directory
-    - name: Add Docker daemon config
-      template: src=docker.conf dest=/etc/systemd/system/docker.service.d/docker.conf
-    - command: systemctl daemon-reload                                              
-    - service: name=docker state=restarted enabled=yes                                                
-
+  roles:
+    - docker/daemon
 
 - hosts: consul-server
   sudo: true
