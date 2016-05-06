@@ -1,0 +1,36 @@
+---
+- hosts: consul-server
+  sudo: true
+  remote_user: vagrant 
+  tasks:
+    - ping:
+
+- hosts: docker-swarm-master
+  sudo: true
+  remote_user: vagrant 
+  vars:
+    swarm_master_service_id: swarm-master
+    consul_url: "consul://{{ hostvars|to_group_vars(groups,'consul-server')|map_on_attr('ansible_ssh_host')|random }}:8500"
+  tasks:
+    - name: Swarm master is running
+      docker:
+        name: swarm-master
+        docker_url: "tcp://{{ansible_ssh_host}}:2375"
+        image: swarm
+        ports:
+          - "{{ansible_ssh_host}}:4000:2375"
+        command: manage --replication --advertise {{ansible_ssh_host}}:4000 {% if zoo_url is defined%}{{zoo_url}}{% elif consul_url%}{{consul_url}}{% else %}NO_KEYVALE_STORAGE_SPECIFIED{% endif %}
+
+- hosts: docker-swarm-node
+  sudo: true
+  remote_user: vagrant 
+  vars:
+    consul_url: "consul://{{ hostvars|to_group_vars(groups,'consul-server')|map_on_attr('ansible_ssh_host')|random }}:8500"
+    swarm_master_ips: "{{ hostvars|to_group_vars(groups,'docker-swarm-master')|map_on_attr('ansible_ssh_host') }}"
+  tasks:
+    - name: Swarm node is running
+      docker:
+        name: swarm-node
+        docker_url: "tcp://{{ansible_ssh_host}}:2375"
+        image: swarm
+        command: join --advertise {{ansible_ssh_host}}:2375 {% if zoo_url is defined%}{{zoo_url}}{% elif consul_url%}{{consul_url}}{% else %}NO_KEYVALE_STORAGE_SPECIFIED{% endif %}

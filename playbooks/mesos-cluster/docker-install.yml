@@ -1,0 +1,8 @@
+- hosts: docker
+  sudo: true
+  remote_user: vagrant 
+  vars:
+    docker_daemon_cluster_store: consul://192.168.2.2:8500
+  roles:
+    - docker/daemon
+

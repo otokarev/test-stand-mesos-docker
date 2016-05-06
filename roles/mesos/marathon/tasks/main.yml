@@ -1,0 +1,4 @@
+- yum: name={{item}} state=installed
+  with_items:
+    - marathon
+- service: name=marathon state=restarted enabled=yes

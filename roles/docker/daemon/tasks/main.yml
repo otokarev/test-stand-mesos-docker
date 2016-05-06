@@ -4,4 +4,4 @@
   ignore_errors: True
   register: docker_check_result
 - include: install.yml
-  when: docker_check_result.rc > 0
+  when: (docker_check_result.rc > 0) or (docker_daemon_update is defined)

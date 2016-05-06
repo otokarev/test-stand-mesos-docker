@@ -1,0 +1,20 @@
+---
+- hosts: docker-swarm-master
+  sudo: true
+  remote_user: vagrant 
+  tasks:
+    - name: Destroy swarm master
+      docker:
+        name: swarm-master
+        image: swarm
+        state: absent
+
+- hosts: docker-swarm-node
+  sudo: true
+  remote_user: vagrant 
+  tasks:
+    - name: Destroy swarm node
+      docker:
+        name: swarm-node
+        image: swarm
+        state: absent

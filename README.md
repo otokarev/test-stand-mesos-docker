@@ -66,3 +66,9 @@ Consul UI
 ```
 http://192.168.2.2:8500
 ```
+
+Run through Marathon
+
+```
+curl -k -XPUT -d @./roles/mesos/consul/templates/mesos-consul.json -H "Content-Type: application/json" http://master2.mesos.boom:8080/v2/apps
+```

@@ -2,4 +2,3 @@
 - copy: content={{zoo_quorum}} dest=/etc/mesos-master/quorum
 - service: name=mesos-slave state=stopped enabled=no
 - service: name=mesos-master state=restarted
-- service: name=marathon state=restarted

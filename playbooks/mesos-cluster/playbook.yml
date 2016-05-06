@@ -1,79 +1,15 @@
----
-- hosts: mesos-cluster
-  sudo: true
-  remote_user: vagrant 
-  tasks:
-    - ping:
-  tags: [mesos, mesos-node, mesos-master]
+- include: mesos-install.yml
+  tags: [mesos]
 
-- hosts: mesos-master
-  sudo: true
-  remote_user: vagrant 
-  tasks:
-    - ping:
-  tags: [mesos, mesos-node, mesos-master]
-
-- hosts: mesos-cluster
-  sudo: true
-  remote_user: vagrant 
-  vars:
-  pre_tasks:
-    - template: src=hosts.j2 dest=/etc/hosts
-    - yum: name={{item}} state=installed
-      with_items:
-        - vim
-        - net-tools
-        - bind-utils
-        - telnet
-        - net-tools
-        - ntp
-    - service: name=ntpd state=restarted enabled=yes
-  roles:
-    - mesos
-  tags: [mesos, mesos-node, mesos-master]
-
-- hosts: mesos-master
-  sudo: true
-  remote_user: vagrant 
-  vars:
-    mesos_master_group: 'mesos-master'
-    zoo_quorum: "{{ (groups['mesos-master']|count/2)|round(0, 'floor')|int + 1 }}"
-    zoo_peer_vars: "{{ hostvars|to_group_vars(groups,'mesos-master') }}"
-    zoo_peer_ips: "{{ hostvars|to_group_vars(groups,'mesos-master')|map_on_attr('ansible_ssh_host') }}"
-  roles:
-    - zookeeper
-    - mesos/master
-  tags: [mesos, mesos-master]
+- include: docker-install.yml
+  tags: [docker]
 
 
-- hosts: mesos-slave
-  sudo: true
-  remote_user: vagrant 
-  vars:
-    zoo_peer_ips: "{{ hostvars|to_group_vars(groups,'mesos-master')|map_on_attr('ansible_ssh_host') }}"
-  roles:
-    - mesos/node
-  tags: [mesos, mesos-node]
+- include: consul-install.yml
+  tags: [consul]
 
-- hosts: mesos-dns
-  sudo: true
-  remote_user: vagrant 
-  vars:
-    mesos_dns_zk: "zk://{{ hostvars|to_group_vars(groups,'mesos-master')|map_on_attr('ansible_ssh_host')|join(':2181,') }}:2181/mesos"
-    mesos_dns_master_ips: "{{ hostvars|to_group_vars(groups,'mesos-master')|map_on_attr('ansible_ssh_host') }}"
-    mesos_dns_listen_ip: "{{ansible_ssh_host}}"
-    mesos_dns_domain: "mesos.boom"
-    mesos_dns_soamname: "ns1.mesos.boom"
-    mesos_dns_soarname: "root.ns1.mesos.boom"
-  roles:
-    - mesos/dns
-    - role: tumf.systemd-service
-      systemd_service_name: "mesos-dns"
-      systemd_service_Unit_Description: Mesos DNS
-      systemd_service_Service_ExecStart: /opt/mesos-dns/bin/mesos-dns -config=/opt/mesos-dns/conf/config.json
-  post_tasks:
-    - service: name=mesos-dns state=restarted
-  tags: ["dns"]
+- include: swarm-install.yml
+  tags: [swarm]
 
 - hosts: spark-node
   sudo: true
@@ -81,90 +17,4 @@
   vars:
   roles:
     - role: spark/node
-      tags: [spark]
-
-- hosts: docker
-  sudo: true
-  remote_user: vagrant 
-  roles:
-    - docker/daemon
-
-- hosts: consul-server
-  sudo: true
-  remote_user: vagrant 
-  vars:
-  tasks:
-    - name: Install first Consul master
-      docker:
-        name: consul
-        docker_url: "tcp://{{ansible_ssh_host}}:2375"
-        image: progrium/consul
-        state: started
-        restart_policy: always
-        hostname: "{{ ansible_fqdn }}"
-        command: -server -advertise {{ ansible_ssh_host }} -bootstrap-expect=3
-        ports:
-          - "{{ ansible_ssh_host }}:8300:8300"
-          - "{{ ansible_ssh_host }}:8301:8301"
-          - "{{ ansible_ssh_host }}:8301:8301/udp"
-          - "{{ ansible_ssh_host }}:8302:8302"
-          - "{{ ansible_ssh_host }}:8302:8302/udp"
-          - "{{ ansible_ssh_host }}:8400:8400"
-          - "{{ ansible_ssh_host }}:8500:8500"
-      when: consul_join is undefined
-      tags: [consul]
-    - name: Install Consul master
-      docker:
-        name: consul
-        docker_url: "tcp://{{ansible_ssh_host}}:2375"
-        image: progrium/consul
-        state: started
-        restart_policy: always
-        hostname: "{{ ansible_fqdn }}"
-        command: -server -advertise {{ ansible_ssh_host }} -join={{ consul_join }}
-        ports:
-          - "{{ ansible_ssh_host }}:8300:8300"
-          - "{{ ansible_ssh_host }}:8301:8301"
-          - "{{ ansible_ssh_host }}:8301:8301/udp"
-          - "{{ ansible_ssh_host }}:8302:8302"
-          - "{{ ansible_ssh_host }}:8302:8302/udp"
-          - "{{ ansible_ssh_host }}:8400:8400"
-          - "{{ ansible_ssh_host }}:8500:8500"
-      when: consul_join is defined
-      tags: [consul]
-
-
-- hosts: docker-swarm-master
-  sudo: true
-  remote_user: vagrant 
-  vars:
-    swarm_master_service_id: swarm-master
-#    zoo_url: "zk://{{ hostvars|to_group_vars(groups,'mesos-master')|map_on_attr('ansible_ssh_host')|join(':2181,') }}:2181/swarm"
-    consul_url: "consul://{{ hostvars|to_group_vars(groups,'consul-server')|map_on_attr('ansible_ssh_host')|random }}:8500"
-  tasks:
-    - name: Swarm master is running
-      docker:
-        name: swarm-master
-        docker_url: "tcp://{{ansible_ssh_host}}:2375"
-        image: swarm
-        ports:
-          - "{{ansible_ssh_host}}:4000:2375"
-        command: manage --replication --advertise {{ansible_ssh_host}}:4000 {% if zoo_url is defined%}{{zoo_url}}{% elif consul_url%}{{consul_url}}{% else %}NO_KEYVALE_STORAGE_SPECIFIED{% endif %}
-      tags: [swarm, docker]
-
-
-- hosts: docker-swarm-node
-  sudo: true
-  remote_user: vagrant 
-  vars:
-#    zoo_url: "zk://{{ hostvars|to_group_vars(groups,'mesos-master')|map_on_attr('ansible_ssh_host')|join(':2181,') }}:2181/swarm"
-    consul_url: "consul://{{ hostvars|to_group_vars(groups,'consul-server')|map_on_attr('ansible_ssh_host')|random }}:8500"
-    swarm_master_ips: "{{ hostvars|to_group_vars(groups,'docker-swarm-master')|map_on_attr('ansible_ssh_host') }}"
-  tasks:
-    - name: Swarm node is running
-      docker:
-        name: swarm-node
-        docker_url: "tcp://{{ansible_ssh_host}}:2375"
-        image: swarm
-        command: join --advertise {{ansible_ssh_host}}:2375 {% if zoo_url is defined%}{{zoo_url}}{% elif consul_url%}{{consul_url}}{% else %}NO_KEYVALE_STORAGE_SPECIFIED{% endif %}
-      tags: [swarm, docker, swarm-node]
+  tags: [spark]

@@ -1,0 +1,51 @@
+---
+- hosts: mesos-cluster
+  sudo: true
+  remote_user: vagrant 
+  tasks:
+    - ping:
+
+- hosts: mesos-master
+  sudo: true
+  remote_user: vagrant 
+  tasks:
+    - ping:
+
+- hosts: mesos-cluster
+  sudo: true
+  remote_user: vagrant 
+  vars:
+  pre_tasks:
+    - template: src=hosts.j2 dest=/etc/hosts
+    - yum: name={{item}} state=installed
+      with_items:
+        - vim
+        - net-tools
+        - bind-utils
+        - telnet
+        - net-tools
+        - ntp
+    - service: name=ntpd state=restarted enabled=yes
+  roles:
+    - mesos
+
+- hosts: mesos-master
+  sudo: true
+  remote_user: vagrant 
+  vars:
+    mesos_master_group: 'mesos-master'
+    zoo_quorum: "{{ (groups['mesos-master']|count/2)|round(0, 'floor')|int + 1 }}"
+    zoo_peer_vars: "{{ hostvars|to_group_vars(groups,'mesos-master') }}"
+    zoo_peer_ips: "{{ hostvars|to_group_vars(groups,'mesos-master')|map_on_attr('ansible_ssh_host') }}"
+  roles:
+    - zookeeper
+    - mesos/master
+    - mesos/marathon
+
+- hosts: mesos-slave
+  sudo: true
+  remote_user: vagrant 
+  vars:
+    zoo_peer_ips: "{{ hostvars|to_group_vars(groups,'mesos-master')|map_on_attr('ansible_ssh_host') }}"
+  roles:
+    - mesos/node

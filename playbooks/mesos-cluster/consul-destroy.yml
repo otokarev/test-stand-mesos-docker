@@ -1,0 +1,23 @@
+- hosts: consul-server
+  sudo: true
+  remote_user: vagrant 
+  vars:
+  tasks:
+    - name: Destroy consul master
+      docker:
+        name: consul
+        docker_url: "tcp://{{ansible_ssh_host}}:2375"
+        image: progrium/consul
+        state: absent
+
+- hosts: consul-client
+  sudo: true
+  remote_user: vagrant 
+  vars:
+  tasks:
+    - name: Destroy consul client
+      docker:
+        name: consul
+        docker_url: "tcp://{{ansible_ssh_host}}:2375"
+        image: progrium/consul
+        state: absent
