@@ -7,8 +7,9 @@
       docker:
         name: consul
         docker_url: "tcp://{{ansible_ssh_host}}:2375"
-        image: progrium/consul
+        image: gliderlabs/consul-server
         state: started
+        net: host
         restart_policy: always
         hostname: "{{ ansible_fqdn }}"
         command: -server -advertise {{ ansible_ssh_host }} -bootstrap-expect=3
@@ -20,14 +21,15 @@
           - "{{ ansible_ssh_host }}:8302:8302/udp"
           - "{{ ansible_ssh_host }}:8400:8400"
           - "{{ ansible_ssh_host }}:8500:8500"
-          - "{{ ansible_ssh_host }}:8600:53"
+          - "{{ ansible_ssh_host }}:8600:8600"
       when: consul_join is undefined
     - name: Install Consul master
       docker:
         name: consul
         docker_url: "tcp://{{ansible_ssh_host}}:2375"
-        image: progrium/consul
+        image: gliderlabs/consul-server
         state: started
+        net: host
         restart_policy: always
         hostname: "{{ ansible_fqdn }}"
         command: -server -advertise {{ ansible_ssh_host }} -join={{ consul_join }}
@@ -39,7 +41,7 @@
           - "{{ ansible_ssh_host }}:8302:8302/udp"
           - "{{ ansible_ssh_host }}:8400:8400"
           - "{{ ansible_ssh_host }}:8500:8500"
-          - "{{ ansible_ssh_host }}:8600:53"
+          - "{{ ansible_ssh_host }}:8600:8600"
       when: consul_join is defined
     - name: Get services list
       uri:
@@ -66,8 +68,9 @@
       docker:
         name: consul
         docker_url: "tcp://{{ansible_ssh_host}}:2375"
-        image: progrium/consul
+        image: gliderlabs/consul-server
         state: started
+        net: host
         restart_policy: always
         hostname: "{{ ansible_fqdn }}"
         command: -advertise {{ ansible_ssh_host }} -join={{ consul_join }}
@@ -79,7 +82,7 @@
           - "{{ ansible_ssh_host }}:8302:8302/udp"
           - "{{ ansible_ssh_host }}:8400:8400"
           - "{{ ansible_ssh_host }}:8500:8500"
-          - "{{ ansible_ssh_host }}:8600:53"
+          - "{{ ansible_ssh_host }}:8600:8600"
 
 - hosts: consul
   sudo: true
