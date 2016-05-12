@@ -1,7 +1,24 @@
 ---
+- name: Clean /var/lib/docker/network/files
+  shell: rm -rf /var/lib/docker/network/files/
+  when: docker_daemon_network_files_remove is defined
+
 - name: Check if docker daemon installed
   shell: systemctl status docker
   ignore_errors: True
   register: docker_check_result
 - include: install.yml
   when: (docker_check_result.rc > 0) or (docker_daemon_update is defined)
+- file: name=/etc/systemd/system/docker.service.d state=directory
+- name: Add Docker daemon config
+  template: src=docker.conf.j2 dest=/etc/systemd/system/docker.service.d/docker.conf
+  notify:
+    - restart docker
+
+- name: Forced restart (reload units)
+  shell: systemctl daemon-reload
+  when: docker_daemon_restart is defined
+- name: Forced restart (restart service)
+  service: name=docker state=restarted enabled=yes                                                
+  when: docker_daemon_restart is defined
+

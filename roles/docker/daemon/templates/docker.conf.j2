@@ -1,3 +1,6 @@
 [Service]
 ExecStart=
-ExecStart=/usr/bin/docker daemon -H fd:// -H tcp://0.0.0.0:2375 -D {% if docker_daemon_cluster_store is defined %}--cluster-store={{ docker_daemon_cluster_store }} {% endif %} --cluster-advertise={{ansible_ssh_host}}:2376
+ExecStart=/usr/bin/docker daemon -H fd:// -H tcp://0.0.0.0:2375 -D \
+    {% if docker_daemon_cluster_store is defined %} --cluster-store={{ docker_daemon_cluster_store }}{% endif %} \
+    {% if docker_daemon_default_gateway is defined %} --default-gateway={{ docker_daemon_default_gateway }}{% endif %} \
+    --cluster-advertise={{ansible_ssh_host}}:2376

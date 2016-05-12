@@ -24,8 +24,17 @@ First of all we need mesos shared library /usr/local/lib/libmesos.so (installed 
 Seems the way below takes too much time for tgz download and gives up finally
 
 ```
-export SPARK_EXECUTOR_URI=http://apache-mirror.rbc.ru/pub/apache/spark/spark-1.6.1/spark-1.6.1-bin-hadoop2.6.tgz MESOS_NATIVE_JAVA_LIBRARY=/usr/local/lib/libmesos.so
-/tmp/spark-1.6.1-bin-hadoop2.6/bin/spark-shell --master mesos://zk://192.168.2.2:2181/mesos --num-executors 3 --executor-cores 1 --executor-memory 512M
+
+   export \
+       SPARK_EXECUTOR_URI=http://apache-mirror.rbc.ru/pub/apache/spark/spark-1.6.1/spark-1.6.1-bin-hadoop2.6.tgz \
+       MESOS_NATIVE_JAVA_LIBRARY=/usr/local/lib/libmesos.so
+   
+   /tmp/spark-1.6.1-bin-hadoop2.6/bin/spark-shell \
+       --master mesos://zk://192.168.2.2:2181/mesos \
+       --num-executors 3 \
+       --executor-cores 1 \
+       --executor-memory 512M
+   
 ```
 
 The way with executor's home works better (somehow it does not work from host system but it works from other vbox VPS):
@@ -71,4 +80,37 @@ Run through Marathon
 
 ```
 curl -k -XPUT -d @./roles/mesos/consul/templates/mesos-consul.json -H "Content-Type: application/json" http://master2.mesos.boom:8080/v2/apps
+```
+
+```
+dig @192.168.2.2 -p 8600 master2.mesos.boom.node.consul
+dig @192.168.2.2 -p 8600 nodes.consul
+dig @192.168.2.2 -p 8600 elasticsearch.nodes.consul
+dig @192.168.2.2 -p 8600 mesos.nodes.consul
+dig @192.168.2.2 -p 8600 mesos.service.consul
+dig @192.168.2.2 -p 8600 consul.service.consul
+dig @192.168.2.2 -p 8600 mesos.service.consul
+dig @192.168.2.2 -p 8600 elasticsearch.service.consul
+dig @192.168.2.2 -p 8600 elasticsearch-executor.service.consul
+dig @192.168.2.2 -p 8600 elasticsearch-executor.service.consul SRV
+dig @192.168.2.2 -p 8600 elasticsearch-executor.service.consul ANY
+dig @192.168.2.2 -p 8600 CLIENT_PORT.elasticsearch-executor.service.consul ANY
+dig @192.168.2.2 -p 8600 _elasticsearch-executor._CLIENT_PORT.service.consul ANY
+dig @192.168.2.2 -p 8600 _elasticsearch-executor._CLIENT_PORT.service.consul SRV
+dig @192.168.2.2 -p 8600 _elasticsearch-executor._TRANSPORT_PORT.service.consul SRV
+```
+
+Docker
+------
+
+You can try to resolve:
+
+```
+Error initializing network controller: Error creating default \"bridge\" network: failed to allocate gateway (172.17.0.1): Address already in use
+```
+
+By:
+
+```
+sudo rm -rf /var/lib/docker/network/files/
 ```

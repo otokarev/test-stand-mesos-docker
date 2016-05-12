@@ -1,0 +1,6 @@
+---
+- name: restart docker
+  shell: systemctl daemon-reload
+  notify: restart docker step 2
+- name: restart docker step 2
+  service: name=docker state=restarted enabled=yes                                                

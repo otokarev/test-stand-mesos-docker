@@ -89,8 +89,10 @@
   remote_user: vagrant 
   vars:
   tasks:
+    - template: src=resolv.conf.j2 dest=/etc/resolv.conf
     - name: Install dnsmasq
       yum: name=dnsmasq state=installed
     - copy: content="server=/consul/{{ ansible_ssh_host }}#8600" dest=/etc/dnsmasq.d/10-consul
     - name: Enable dnsmasq
       service: name=dnsmasq enabled=on state=restarted
+  tags: [dnsmasq]
