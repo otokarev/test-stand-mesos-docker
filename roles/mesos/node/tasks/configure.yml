@@ -1,4 +1,4 @@
-- copy: content=zk://{{ zoo_peer_ips|join(':2181,') }}:2181/mesos dest=/etc/mesos/zk
+- copy: content={{ mesos_zk }} dest=/etc/mesos/zk
 - copy: content=docker,mesos dest=/etc/mesos-slave/containerizers                                 
 - copy: content=5mins dest=/etc/mesos-slave/executor_registration_timeout                         
 - service: name=mesos-slave state=restarted enabled=yes                                           

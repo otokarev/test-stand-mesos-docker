@@ -1,12 +1,12 @@
-- include: mesos-install.yml
-  tags: [mesos]
-
 - include: docker-install.yml
   tags: [docker]
 
-
+# Discovering
 - include: consul-install.yml
   tags: [consul]
+
+- include: mesos-install.yml
+  tags: [mesos]
 
 - include: swarm-install.yml
   tags: [swarm]

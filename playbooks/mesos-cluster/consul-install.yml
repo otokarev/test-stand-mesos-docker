@@ -1,3 +1,15 @@
+- hosts: consul
+  sudo: true
+  remote_user: vagrant 
+  vars:
+  tasks:
+    - template: src=resolv.conf.j2 dest=/etc/resolv.conf
+    - name: Install dnsmasq
+      yum: name=dnsmasq state=installed
+    - copy: content="server=/consul/{{ ansible_ssh_host }}#8600" dest=/etc/dnsmasq.d/10-consul
+    - name: Enable dnsmasq
+      service: name=dnsmasq enabled=on state=restarted
+
 - hosts: consul-server
   sudo: true
   remote_user: vagrant 
@@ -57,7 +69,14 @@
         body: '{"name": "zookeeper", "tags": ["zookeeper"], "port": 2181}'
       when: services_result.json["zookeeper"] is undefined
       ignore_errors: yes
-    - debug: var=services_result
+    - name: Add marathon service in consul
+      uri:
+        url: http://{{ansible_ssh_host}}:8500/v1/agent/service/register
+        method: PUT
+        body_format: json
+        body: '{"service": {"name": "marathon", "tags": ["marathon"], "port": 8080, "check": {"script": "curl localhost:8080 >/dev/null 2>&1", "interval": "10s"}}}'
+      when: services_result.json["marathon"] is undefined
+      ignore_errors: yes
 
 - hosts: consul-client
   sudo: true
@@ -84,15 +103,3 @@
           - "{{ ansible_ssh_host }}:8500:8500"
           - "{{ ansible_ssh_host }}:8600:8600"
 
-- hosts: consul
-  sudo: true
-  remote_user: vagrant 
-  vars:
-  tasks:
-    - template: src=resolv.conf.j2 dest=/etc/resolv.conf
-    - name: Install dnsmasq
-      yum: name=dnsmasq state=installed
-    - copy: content="server=/consul/{{ ansible_ssh_host }}#8600" dest=/etc/dnsmasq.d/10-consul
-    - name: Enable dnsmasq
-      service: name=dnsmasq enabled=on state=restarted
-  tags: [dnsmasq]

@@ -2,7 +2,8 @@
   sudo: true
   remote_user: vagrant 
   vars:
-    docker_daemon_cluster_store: consul://192.168.2.2:8500
-#    docker_daemon_default_gateway: "{{ ansible_ssh_host }}"
+    docker_daemon_cluster_store: consul://consul.service.consul:8500
+    docker_daemon_dns: 172.17.0.1
+    docker_daemon_dns_search: service.consul
   roles:
     - docker/daemon

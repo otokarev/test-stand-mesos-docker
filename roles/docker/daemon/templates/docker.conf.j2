@@ -3,4 +3,6 @@ ExecStart=
 ExecStart=/usr/bin/docker daemon -H fd:// -H tcp://0.0.0.0:2375 -D \
     {% if docker_daemon_cluster_store is defined %} --cluster-store={{ docker_daemon_cluster_store }}{% endif %} \
     {% if docker_daemon_default_gateway is defined %} --default-gateway={{ docker_daemon_default_gateway }}{% endif %} \
+    {% if docker_daemon_dns is defined %} --dns={{ docker_daemon_dns }}{% endif %} \
+    {% if docker_daemon_dns_search is defined %} --dns-search={{ docker_daemon_dns_search }}{% endif %} \
     --cluster-advertise={{ansible_ssh_host}}:2376
