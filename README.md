@@ -31,8 +31,8 @@ Seems the way below takes too much time for tgz download and gives up finally
    
    /tmp/spark-1.6.1-bin-hadoop2.6/bin/spark-shell \
        --master mesos://zk://192.168.2.2:2181/mesos \
-       --num-executors 3 \
-       --executor-cores 1 \
+       --num-executors 2 \
+       --executor-cores 0.2 \
        --executor-memory 512M
    
 ```

@@ -11,24 +11,6 @@
   tasks:
     - ping:
 
-- hosts: mesos-cluster
-  sudo: true
-  remote_user: vagrant 
-  vars:
-  pre_tasks:
-    - template: src=hosts.j2 dest=/etc/hosts
-    - yum: name={{item}} state=installed
-      with_items:
-        - vim
-        - net-tools
-        - bind-utils
-        - telnet
-        - net-tools
-        - ntp
-    - service: name=ntpd state=restarted enabled=yes
-  roles:
-    - mesos
-
 - hosts: mesos-master
   sudo: true
   remote_user: vagrant 

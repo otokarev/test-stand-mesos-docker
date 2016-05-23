@@ -25,7 +25,7 @@ Vagrant.configure(2) do |config|
 #    end
 #  end
 
-    (2..4).each do |i|
+    (2..3).each do |i|
       config.vm.define "master#{i}" do |c|
         c.vm.provider "virtualbox" do |v|
           v.cpus = 4

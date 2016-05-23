@@ -1,3 +1,29 @@
+- hosts: all
+  sudo: true
+  remote_user: vagrant 
+  vars:
+    resolv_conf_nameserver: 10.0.2.3
+  tasks:
+    - command: timedatectl set-timezone UTC
+    - template: src=hosts.j2 dest=/etc/hosts
+    - name: Set primary ns to {{ansible_ssh_host}}:53 port and secandary to extarnal fallback ns
+      template: src=resolv.conf.j2 dest=/etc/resolv.conf
+    - yum: name={{item}} state=installed
+      with_items:
+        - vim
+        - net-tools
+        - bind-utils
+        - telnet
+        - net-tools
+        - ntp
+    - service: name=ntpd state=restarted enabled=yes
+    - name: Install dnsmasq
+      yum: name=dnsmasq state=installed
+    - name: Configure dnsmasq to use consul on {{ ansible_ssh_host }}#8600 
+      copy: content="server=/consul/{{ ansible_ssh_host }}#8600" dest=/etc/dnsmasq.d/10-consul
+    - name: Enable dnsmasq
+      service: name=dnsmasq enabled=on state=restarted
+
 - include: docker-install.yml
   tags: [docker]
 

@@ -3,12 +3,6 @@
   remote_user: vagrant 
   vars:
   tasks:
-    - template: src=resolv.conf.j2 dest=/etc/resolv.conf
-    - name: Install dnsmasq
-      yum: name=dnsmasq state=installed
-    - copy: content="server=/consul/{{ ansible_ssh_host }}#8600" dest=/etc/dnsmasq.d/10-consul
-    - name: Enable dnsmasq
-      service: name=dnsmasq enabled=on state=restarted
 
 - hosts: consul-server
   sudo: true
@@ -24,7 +18,7 @@
         net: host
         restart_policy: always
         hostname: "{{ ansible_fqdn }}"
-        command: -server -advertise {{ ansible_ssh_host }} -bootstrap-expect=3
+        command: -server -advertise {{ ansible_ssh_host }} -bootstrap-expect=2
         ports:
           - "{{ ansible_ssh_host }}:8300:8300"
           - "{{ ansible_ssh_host }}:8301:8301"
