@@ -1,5 +1,7 @@
 MESOS
 -----
+
+```
 for i in `sudo docker -H 192.168.2.2:4000 ps -a --format "{{.Image}} {{.Names}}" | grep elastic | gawk '{print $2}'`; do sudo docker -H 192.168.2.2:4000 stop $i; sudo docker -H 192.168.2.2:4000 rm $i; done
 
 sudo docker -H 192.168.2.2:4000 ps -a
@@ -8,13 +10,14 @@ sudo docker -H 192.168.2.2:4000 network create --driver overlay --subnet=10.0.9.
 
 sudo docker run --net host --name hui --rm -i -t ubuntu /bin/bash
 
+# Create elasticsearch cluster
 curl -k -XPUT -d @playbooks/mesos-cluster/es.json -H "Content-Type: application/json" http://master2.mesos.boom:8080/v2/apps
 
-TODO:
-
-посмотреть в кого резолвится в контейнере хостнейм пира, похоже, что в 10ую сетку
-
+# Clean up known_hosts after vpses recreation
 for i in 2 3 4 5 6 7; do ssh-keygen -f "/home/otokarev/.ssh/known_hosts" -R 192.168.2.$i; done
+```
+
+
 
 SPARK
 -----
@@ -45,6 +48,7 @@ export MESOS_NATIVE_JAVA_LIBRARY=/usr/local/lib/libmesos.so
 ```
 
 Test for spark-shell:
+
 ```
 sc.parallelize((1 to 1000)).foreach((x) => Thread.sleep(1000))
 ```
@@ -76,7 +80,7 @@ Consul UI
 http://192.168.2.2:8500
 ```
 
-Run through Marathon
+Deploy Mesos-Consul by Marathon
 
 ```
 curl -k -XPUT -d @./roles/mesos/consul/templates/mesos-consul.json -H "Content-Type: application/json" http://master2.mesos.boom:8080/v2/apps

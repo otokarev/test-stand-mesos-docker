@@ -3,5 +3,11 @@
     - java-1.8.0-openjdk.x86_64
 - stat: path=/tmp/spark-1.6.1-bin-hadoop2.6
   register: spark_path
+- local_action: stat path=/tmp/spark-1.6.1-bin-hadoop2.6.tgz
+  sudo: False
+  register: spark_local_arc
+- local_action: get_url url=http://apache-mirror.rbc.ru/pub/apache/spark/spark-1.6.1/spark-1.6.1-bin-hadoop2.6.tgz dest=/tmp/
+  sudo: False
+  when: not spark_local_arc.stat.exists
 - unarchive: src=spark-1.6.1-bin-hadoop2.6.tgz dest=/tmp/ copy=true
   when: not spark_path.stat.exists
