@@ -13,18 +13,6 @@ Vagrant.configure(2) do |config|
     SHELL
   end
 
-#  config.vm.define "docker-registry1" do |c|
-#    c.vm.network "private_network", ip: "192.168.2.4"
-#    c.vm.hostname = "hui.boom"
-#    c.vm.provision "ansible" do |a|
-#      a.limit = "docker-registry1"
-#      a.playbook = "playbooks/docker-registry/playbook.yml"
-#      a.raw_arguments = [
-#        '-K'
-#      ]
-#    end
-#  end
-
     (2..3).each do |i|
       config.vm.define "master#{i}" do |c|
         c.vm.provider "virtualbox" do |v|
@@ -47,15 +35,4 @@ Vagrant.configure(2) do |config|
       end
     end
 
-#    #
-#    # Docker registry
-#    #
-#    config.vm.define "docker-hub" do |c|
-#      c.vm.provider "virtualbox" do |v|
-#        v.memory = 512
-#        v.cpus = 1
-#      end
-#      c.vm.network "private_network", ip: "192.168.2.8"
-#      c.vm.hostname = "nexus-test.openprovider.nl"
-#    end
 end
