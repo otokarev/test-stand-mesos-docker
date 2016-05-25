@@ -44,7 +44,10 @@ The way with executor's home works better (somehow it does not work from host sy
 
 ```
 export MESOS_NATIVE_JAVA_LIBRARY=/usr/local/lib/libmesos.so
-/tmp/spark-1.6.1-bin-hadoop2.6/bin/spark-shell --master mesos://zk://192.168.2.2:2181/mesos --num-executors 3 --executor-cores 1 --executor-memory 512M -c spark.mesos.executor.home=/tmp/spark-1.6.1-bin-hadoop2.6/
+/tmp/spark-1.6.1-bin-hadoop2.6/bin/spark-shell \
+    --master mesos://zk://192.168.2.2:2181/mesos \
+    --num-executors 3 --executor-cores 1 --executor-memory 512M \
+    -c spark.mesos.executor.home=/tmp/spark-1.6.1-bin-hadoop2.6/
 ```
 
 Test for spark-shell:
